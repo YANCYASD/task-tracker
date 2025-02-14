@@ -2,6 +2,30 @@ import { JsonDb } from "./DB/JsonDb";
 import { TaskService } from "./service/taskService";
 import { TaskStatus } from "./types/task";
 
+function validateArg(
+  args: string[],
+  index: number,
+  errorMessage: string,
+): string {
+  if (!args[index]) throw new Error(errorMessage);
+  return args[index];
+}
+
+function validateNumberArg(
+  args: string[],
+  index: number,
+  errorMessage: string,
+): number {
+  const arg = validateArg(args, index, errorMessage);
+  return Number(arg);
+}
+
+function validateTaskStatus(arg: string | undefined): TaskStatus | undefined {
+  if (!["done", "todo", "in-progress", undefined].includes(arg))
+    throw new Error("Status is error");
+  return arg as TaskStatus | undefined;
+}
+
 async function main() {
   const jsonDb = new JsonDb();
   await jsonDb.init();
@@ -12,40 +36,39 @@ async function main() {
   switch (action) {
     case "add":
       {
-        if (!args[0]) throw new Error("Description is required");
-        await taskService.add(args[0]);
+        const description = validateArg(args, 0, "Description is required");
+        await taskService.add(description);
       }
       break;
     case "update":
       {
-        if (!args[0]) throw new Error("Id(number) is required");
-        if (!args[1]) throw new Error("Description is required");
-        await taskService.update(Number(args[0]), args[1]);
+        const id = validateNumberArg(args, 0, "Id(number) is required");
+        const description = validateArg(args, 1, "Description is required");
+        await taskService.update(id, description);
       }
       break;
     case "delete":
       {
-        if (!args[0]) throw new Error("Id(number) is required");
-        await taskService.delete(Number(args[0]));
+        const id = validateNumberArg(args, 0, "Id(number) is required");
+        await taskService.delete(id);
       }
       break;
     case "mark-in-progress":
       {
-        if (!args[0]) throw new Error("Id(number) is required");
-        await taskService.markInProgress(Number(args[0]));
+        const id = validateNumberArg(args, 0, "Id(number) is required");
+        await taskService.markInProgress(id);
       }
       break;
     case "mark-done":
       {
-        if (!args[0]) throw new Error("Id(number) is required");
-        await taskService.markInDone(Number(args[0]));
+        const id = validateNumberArg(args, 0, "Id(number) is required");
+        await taskService.markInDone(id);
       }
       break;
     case "list":
       {
-        if (!["done", "todo", "in-progress", undefined].includes(args[0]))
-          throw new Error("Status is error");
-        await taskService.list(args[0] as TaskStatus | undefined);
+        const status = validateTaskStatus(args[0]);
+        await taskService.list(status);
       }
       break;
     default:
